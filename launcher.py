@@ -51,4 +51,5 @@ OddoorLauncher(
     KeyPad(),
     Buzzer(12, 18),
     version,
+    path,
 ).run()
