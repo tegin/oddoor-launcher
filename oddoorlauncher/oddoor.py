@@ -65,9 +65,9 @@ class OddoorLauncher(Oddoor, OotAmqp):
     repo_name = "oddoor-launcher"
 
     def check_upgrade(self, **kwargs):
-        g = github.GitHub()
+        g = github.Github()
         repo = g.get_organization(self.organization).get_repo(self.repo_name)
-        release = repo.get_lastest_release().tag_name
+        release = repo.get_latest_release().tag_name
         if packaging_version.parse(self.version) < packaging_version.parse(release):
             self.upgrade_repository(release)
 
