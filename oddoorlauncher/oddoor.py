@@ -2,6 +2,7 @@ import logging
 import os
 import time
 
+import git
 import github
 import psutil
 import RPi.GPIO as GPIO
@@ -68,17 +69,21 @@ class OddoorLauncher(Oddoor, OotAmqp):
         repo = g.get_organization(self.organization).get_repo(self.repo_name)
         release = repo.get_lastest_release().tag_name
         if packaging_version.parse(self.version) < packaging_version.parse(release):
-            self.upgrade_repository()
+            self.upgrade_repository(release)
 
-    def upgrade_repository(self):
-        pass
+    def upgrade_repository(self, release):
+        repo = git.Repo(self.path)
+        repo.remote("origin").fetch()
+        repo.git.checkout(release)
+        self.reboot()
 
-    def __init__(self, connection, rdr, keypad, buzzer, version):
+    def __init__(self, connection, rdr, keypad, buzzer, version, path):
         super().__init__(connection)
         self.keypad = keypad
         self.buzzer = buzzer
         self.reader = rdr
         self.version = version
+        self.path = path
         self.functions = [
             [get_data_mfrc522, self.reader],
             [get_data_keypad, self.keypad, self.buzzer],
@@ -87,6 +92,7 @@ class OddoorLauncher(Oddoor, OotAmqp):
     def get_default_amqp_options(self):
         res = super().get_default_amqp_options()
         res["open"] = self.amqp_key_check(self.open_force)
+        res["upgrade"] = self.amqp_key_check(self.check_upgrade)
         return res
 
     def open_force(self, **kwargs):
